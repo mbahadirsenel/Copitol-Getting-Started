@@ -36,11 +36,47 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="participants-section">
           <h5>Current Participants (${participantCount}):</h5>
           <ul class="participants-list">
-            ${details.participants.map((email) => `<li>${email}</li>`).join("")}
+            ${details.participants.map((email) => `<li><span>${email}</span><button class="delete-btn" data-activity="${name}" data-email="${email}" title="Unregister">✕</button></li>`).join("")}
           </ul>
         </div>
       `;
       activitiesList.appendChild(card);
+
+      // Add event listeners for delete buttons
+      const deleteButtons = card.querySelectorAll(".delete-btn");
+      deleteButtons.forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const activityName = btn.dataset.activity;
+          const email = btn.dataset.email;
+
+          try {
+            const response = await fetch(
+              `/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(email)}`,
+              {
+                method: "DELETE",
+              }
+            );
+            const data = await response.json();
+
+            if (response.ok) {
+              messageDiv.className = "message success";
+              messageDiv.textContent = data.message;
+              messageDiv.classList.remove("hidden");
+              fetchActivities(); // Refresh activities list
+            } else {
+              messageDiv.className = "message error";
+              messageDiv.textContent = data.detail;
+              messageDiv.classList.remove("hidden");
+            }
+          } catch (error) {
+            messageDiv.className = "message error";
+            messageDiv.textContent = "An error occurred while unregistering.";
+            messageDiv.classList.remove("hidden");
+            console.error("Error unregistering:", error);
+          }
+        });
+      });
     }
   }
 
